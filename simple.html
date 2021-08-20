@@ -3,11 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Websocket MQTT</title>
+  <!-- Don't cache the page -->
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <title>Websocket Simple MQTT demo</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    
+  <!-- Navigation bar CSS -->
+  <link rel="stylesheet" type="text/css" href="../../css/custom.css">
+  
+  <!-- Favorite icon -->
+  <link rel="icon" href="./images/favicon.ico">
 </head>
 <body>
-  Use WebSocket client to connect to MQTT server
+  
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </body>
 <script>
 const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
@@ -55,11 +71,20 @@ client.on('connect', () => {
 
 client.on('message', (topic, message, packet) => {
   console.log('Received Message: ' + message.toString() + '\nOn topic: ' + topic)
+  var paragraph = document.getElementById("vscp-mqtt-js-test-event");
+  paragraph.innerHTML = paragraph.innerHTML + '<br>' + 'Received Message: ' + message.toString() + '<br>On topic: ' + topic;
 })
 
 client.on('close', () => {
   console.log(clientId + ' disconnected')
 })
 </script>
+
+<h1>Simple Websocket MQTT demo</h1>
+
+Bellow VSCP events in JSON format received on the topic _vscp/#_ is shown in real time. This data is also shown in 
+the console log and can be seen there if you open developer tools.
+
+<p id="vscp-mqtt-js-test-event"></p>
 </html>
 
