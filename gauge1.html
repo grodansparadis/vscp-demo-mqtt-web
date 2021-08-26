@@ -24,6 +24,16 @@
         a fridge in our house. This is real live data.
     </p>
 
+    <p>
+      The websocket connection used here is a secure TLS connection to the  <a href="https://github.com/grodansparadis/vscp/wiki/Demo">VSCP MQTT demo server</a>. 
+      You can freely test this server for VSCP related experiments. It gets real time live events published from my (<a href="mailto:akhe@grodansparadis.com">akhe</a>) 
+      office and home. See the link for information of events published. 
+    </p>
+    
+    <p>
+      Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-mqtt-web">here</a>
+    </p>
+
     <h2>Demo</h2>
     <div id="chart_div" style="width: 400px; height: 400px;"></div>
 </div>
@@ -58,7 +68,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
 
       const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
 
-      const host = 'ws://demo.vscp.org:9001'
+      const host = 'wss://demo.vscp.org:9901'
       //const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
 
       // Wait until the whole website is loaded

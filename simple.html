@@ -10,10 +10,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    
-  <!-- Navigation bar CSS -->
-  <link rel="stylesheet" type="text/css" href="../../css/custom.css">
-  
+      
   <!-- Favorite icon -->
   <link rel="icon" href="./images/favicon.ico">
 </head>
@@ -29,7 +26,7 @@
 const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
 
 //const host = 'ws://broker.emqx.io:8083/mqtt'
-const host = 'ws://demo.vscp.org:9001'
+const host = 'wss://demo.vscp.org:9901'
 //const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
 
 const options = {
@@ -82,8 +79,20 @@ client.on('close', () => {
 
 <h1>Simple Websocket MQTT demo</h1>
 
-Bellow VSCP events in JSON format received on the topic _vscp/#_ is shown in real time. This data is also shown in 
-the console log and can be seen there if you open developer tools.
+<p>
+  Bellow is published raw VSCP events in JSON format received on the topic <b>vscp/#</b> is shown in real time. This data is also shown in 
+  the console log and can be seen there if you open developer tools.
+</p>
+
+<p>
+  The websocket connection used here is a secure TLS connection to the  <a href="https://github.com/grodansparadis/vscp/wiki/Demo">VSCP MQTT demo server</a>. 
+  You can freely test this server for VSCP related experiments. It gets real time live events published from my (<a href="mailto:akhe@grodansparadis.com">akhe</a>) 
+  office and home. See the link for information of events published. 
+</p>
+
+<p>
+  Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-mqtt-web">here</a>
+</p>
 
 <p id="vscp-mqtt-js-test-event"></p>
 </html>
