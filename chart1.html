@@ -1,0 +1,284 @@
+<!--
+  This file connects using websockets to the VSCP demo server and show the live temperature in our fridge in 
+  a bernii/gauge.js gauge.  
+  
+  https://www.chartjs.org/
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Don't cache the page -->
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <title>Websocket Simple MQTT demo</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <!-- Charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js" integrity="sha256-bC3LCZCwKeehY6T4fFi9VfOU0gztUa+S4cnkIhVPZ5E=" crossorigin="anonymous"></script>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  
+  <!-- Favorite icon -->
+  <link rel="icon" href="./images/favicon.ico">
+</head>
+
+<body>
+  
+  <div class="container-fluid">
+    <h1>VSCP c charts.js MQTT demo</h1>
+    <p>
+        This demo uses the charts from <a href="https://www.chartjs.org/" target="new">charts.js</a> to display temperature measurement values in degrees Celsius. It displays
+        <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class1.measurement?id=type6" target="new">CLASS1.MEASUREMENT, Type=6/VSCP_TYPE_MEASUREMENT_TEMPERATURE</a> values that comes from sensor=4
+        a fridge in our house. This is real live data. Docs for the charts is <a href="https://www.chartjs.org/docs/latest/">here</a>.
+    </p>
+
+    <p>
+      You may need to be a bit patient with this demo as the live data is delivered every minute.
+    </p>
+
+    <p>
+      The websocket connection used here is a secure TLS connection to the  <a href="https://github.com/grodansparadis/vscp/wiki/Demo">VSCP MQTT demo server</a>. 
+      You can freely test this server for VSCP related experiments. It gets real time live events published from my (<a href="mailto:akhe@grodansparadis.com">akhe</a>) 
+      office and home. See the link for information of events published. 
+    </p>
+    
+    <p>
+      Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-mqtt-web">here</a>
+    </p>
+
+    <h2>Demo</h2>
+    <canvas id="myChart" width="400" height="400"></canvas>	
+</div>
+
+<hr />
+Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+
+
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+  <!-- bernii/gauge.js Charts API -->
+  <script type="text/javascript" src="js/gauge.js-1.3.7/dist/gauge.js"></script>
+  <script type="text/javascript">
+
+    (function() {
+
+      const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
+
+      const host = 'wss://demo.vscp.org:9901'
+      //const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
+
+      // Wait until the whole website is loaded
+      $( document ).ready( function() {
+
+        var measurement_time_fridge = [];
+        var measurement_time_refrigerator_upper = [];
+        var measurement_time_refrigerator_lower = [];
+        var measurement_time_kitchen = [];
+
+				var measurement_value_fridge = [];	
+        var measurement_value_refrigerator_upper = [];
+        var measurement_value_refrigerator_lower = [];
+        var measurement_value_kitchen = [];
+
+				var data = {
+					labels: [
+            measurement_time_fridge,
+            measurement_time_refrigerator_upper,
+            measurement_time_refrigerator_lower,
+            measurement_time_kitchen],
+					datasets: [
+            {
+						  label: 'Fridge temperature',
+						  fill: false,
+						  lineTension: 1,
+						  backgroundColor: "rgba(0, 255, 0, 0.75 )",
+              borderColor: "rgba(0, 255, 0, 1)",
+              pointRadius: 0,  // Don't draw points
+						  pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+						  pointHoverBorderColor: "rgba(59, 89, 152, 1)",						    
+						  data: measurement_value_fridge
+					},
+          {
+						  label: 'Refrigerator temperature upper',
+						  fill: false,
+						  lineTension: 1,
+						  backgroundColor: "rgba(255, 0, 0, 0.75 )",
+              borderColor: "rgba(255, 0, 0, 1)",
+              pointRadius: 0,  // Don't draw points
+						  pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+						  pointHoverBorderColor: "rgba(59, 89, 152, 1)",						    
+						  data: measurement_value_refrigerator_upper
+					},
+          {
+						  label: 'Refrigerator temperature lower',
+						  fill: false,
+						  lineTension: 1,
+						  backgroundColor: "rgba(0, 0, 255, 0.75 )",
+              borderColor: "rgba(0, 0, 255, 1)",
+              pointRadius: 0,  // Don't draw points
+						  pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+						  pointHoverBorderColor: "rgba(59, 89, 152, 1)",						    
+						  data: measurement_value_refrigerator_lower
+					},
+          {
+						  label: 'Kitchen temperature',
+						  fill: false,
+						  lineTension: 1,
+						  backgroundColor: "rgba(0, 0, 0, 0.75 )",
+              borderColor: "rgba(0, 0, 0, 1)",
+              pointRadius: 0,  // Don't draw points
+						  pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+						  pointHoverBorderColor: "rgba(59, 89, 152, 1)",						    
+						  data: measurement_value_kitchen
+					}
+        ]
+				};
+
+        var options = {
+					type: 'line',
+					animation: true,
+					// http://www.chartjs.org/docs/latest/axes/cartesian/time.html#ticks-source
+					options: {
+						animation: false,
+        				scales: {
+            				xAxes: [{
+								type: 'time',
+								unitStepSize: 2,
+                				time: {	
+									unit: 'C',										
+									displayFormats: {
+          								'millisecond': 'HH:mm',
+            							'second': 'HH:mm',
+            							'minute': 'HH:mm',
+            							'hour': 'D/M',
+            							'day': 'YYYY-MM-DD',
+            							'week': 'YYYY-MM-DD',
+            							'month': 'YYYY-MM-DD',
+            							'quarter': 'YYYY-MM-DD',
+										      'year': 'YYYY-MM-DD',
+          							}
+								},
+								scaleLabel: {
+        							display: true,
+        							labelString: 'labelstring'
+      							}
+							}],
+							yAxes: [{
+      							scaleLabel: {
+        							display: true,
+        							labelString: 'degrees Celsius'
+      							}
+    						}]
+                    	}
+    				}
+				};	
+
+				var ctx = $("#myChart");
+				options.data = data;
+				var LineGraph = new Chart( ctx, options );
+
+				function createChart( d ) {
+  					if ( LineGraph) { 
+    					LineGraph.destroy();
+  					}
+				  
+			    	options.data = d;  
+					LineGraph = new Chart( ctx, options );
+				}
+
+
+        const optionsMQTT = {
+          keepalive: 30,
+          clientId: clientId,
+          protocolId: 'MQTT',
+          protocolVersion: 4,
+          clean: true,
+          reconnectPeriod: 3000,
+          connectTimeout: 30 * 1000,
+          will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+          },
+          rejectUnauthorized: false,
+          username: "vscp",
+          password: "secret"
+        }
+
+        console.log('connecting mqtt client to ', host)
+        const client = mqtt.connect(host, optionsMQTT)
+
+        client.on('error', (err) => {
+          console.log('Connection error: ', err)
+          client.end()
+        })
+
+        client.on('reconnect', () => {
+          console.log('Reconnecting...')
+        })
+
+        client.on('connect', () => {
+          
+          console.log('Client connected:' + clientId)
+          
+          // Subscribe to fridge temperature
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:01/1040/6/1/1/#', { qos: 0 })
+
+          // Subscribe to refrigerator temperature upper cabinet
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:05/1040/6/5/1/#', { qos: 0 })
+
+          // Subscribe to refrigerator temperature lower cabinet
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:05/1040/6/5/2/#', { qos: 0 })
+
+          // Subscribe to kitchen temperature
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:01/1040/6/1/4/#', { qos: 0 })
+          
+          //client.publish('testtopic', 'ws connection demo...!', { qos: 0, retain: false })
+        })
+
+        client.on('message', (topic, message, packet) => {
+          console.log('Received Message: ' + message.toString() + '\nOn topic: ' + topic)
+          //paragraph.innerHTML = paragraph.innerHTML + '<br>' + 'Received Message: ' + message.toString() + '<br>On topic: ' + topic;
+        
+          const ev = JSON.parse(message.toString());
+          console.log("Measurement:", ev.measurement.value);
+          console.log(topic)
+          if (topic == 'vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:01/1040/6/1/1') {
+            // Fridge temperature
+            LineGraph.data.datasets[0].data.push({x: ev.vscpDateTime, y: ev.measurement.value});
+          }
+          else if (topic == 'vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:05/1040/6/5/1') {
+            // Refrigerator upper cabinet temperature
+            LineGraph.data.datasets[1].data.push({x: ev.vscpDateTime, y: ev.measurement.value});
+          }
+          else if (topic == 'vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:05/1040/6/5/2') {
+            // Refrigerator lower cabinet temperature
+            LineGraph.data.datasets[2].data.push({x: ev.vscpDateTime, y: ev.measurement.value});
+          }
+          else if (topic == 'vscp/25:00:00:00:00:00:00:00:00:00:00:00:06:01:00:01/1040/6/1/4') {
+            // Kitchen temperature
+            LineGraph.data.datasets[3].data.push({x: ev.vscpDateTime, y: ev.measurement.value});
+          }
+
+          LineGraph.update();
+        })
+
+        client.on('close', () => {
+          console.log(clientId + ' disconnected')
+        })
+
+      }); // Document ready
+
+    })();
+
+  </script>
+</body>
+</html>
+
