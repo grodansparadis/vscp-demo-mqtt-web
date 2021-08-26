@@ -14,5 +14,8 @@ Contains links to all files bellow
 ## simple.html
 This file connects using websockets to the VSCP demo server and subscribe to the topic topic _vscp/#_ and display the real time events received. 
 
-## simple.html
-This file connects using websockets to the VSCP demo server and show the live temperature in our fridge in a gauge.
+## gauge1.html
+This file connects using websockets to the VSCP demo server and show the live temperature in our fridge in a Google gauge.
+
+## gauge2.html
+This file connects using websockets to the VSCP demo server and show the live temperature in our fridge in a bernii/gauge.js gauge.
