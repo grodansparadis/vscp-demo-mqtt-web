@@ -1,0 +1,679 @@
+<!--
+  This file connects using websockets to the VSCP demo server and show the live wind direction 
+  from two different wind direction sensors in a gauge.  
+  
+  https://canvas-gauges.com/
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Don't cache the page -->
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <title>Websocket Simple MQTT demo</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.7/all/gauge.min.js"></script>
+  
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+  
+  <style>
+    body {
+      background-color: #cccccc;   /*  here is the color  */
+      margin: 0 auto;
+      padding: 0;
+      width: 100%;
+      color: #595959;
+      font: normal 13px/1.8em Tahoma, Arial, Helvetica, sans-serif;
+      text-align: center;
+      letter-spacing: 0.06em;
+    }
+  </style>
+  
+  <!-- Favorite icon -->
+  <link rel="icon" href="./images/favicon.ico">
+</head>
+<div id="gauge"></div>
+<body>
+  
+  <div class="container-fluid">
+    <h1>VSCP gauge.js wind speed demo</h1>
+    <p>
+        This demo uses the gauge from <a href="https://canvas-gauges.com/" target="new">gauge.js</a> to display the wind direction from two different wind direction sensors. It displays
+        <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class1.measurement?id=type6" target="new">CLASS1.MEASUREMENT, Type=6/VSCP_TYPE_MEASUREMENT_TEMPERATURE</a> values that comes from sensor=4
+        This is real live data. Docs for the gauge is <a href="https://canvas-gauges.com/">here</a> and <a href="https://bernii.github.io/gauge.js/">here</a>
+    </p>
+
+    <p>
+      The websocket connection used here is a secure TLS connection to the  <a href="https://github.com/grodansparadis/vscp/wiki/Demo">VSCP MQTT demo server</a>. 
+      You can freely test this server for VSCP related experiments. It gets real time live events published from my (<a href="mailto:akhe@grodansparadis.com">akhe</a>) 
+      office and home. See the link for information of events published. 
+    </p>
+    
+    <p>
+      Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-mqtt-web">here</a>
+    </p>
+
+    <hr>
+
+    <h2>Weather station Demo</h2>
+    <div class="container">	
+      <div class="row">					
+			  <div class="col-sm w-5" >
+          <div class="row">	
+            <div>
+				      <!-- Injecting linear gauge -->
+					    <canvas id="windspeed1"  ></canvas>
+          </div>
+          </div>
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Max:</b> <span id="windspeed1_max">0</span> m/s
+            </div>            
+          </div>
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Min:</b> <span id="windspeed1_min">0</span> m/s
+            </div>            
+          </div> 
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Average:</b> <span id="windspeed1_average">0</span> m/s
+            </div>            
+          </div>
+				</div>
+        <div class="col-sm w-15" >
+          <div class="row">	
+            <div>
+				      <!-- Injecting linear gauge -->
+					  <canvas id="windspeed2"  ></canvas>
+            </div>
+          </div>
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Max:</b> <span id="windspeed2_max">0</span> m/s
+            </div>            
+          </div>
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Min:</b> <span id="windspeed2_min">0</span> m/s
+            </div>            
+          </div> 
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Average:</b> <span id="windspeed2_average">0</span> m/s
+            </div>            
+          </div>
+				</div>
+        <div class="col-sm w-15" >
+          <div class="row">	
+            <div>
+				      <!-- Injecting linear gauge -->
+					    <canvas id="windspeed3"  ></canvas>
+            </div>
+          </div>
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Max:</b> <span id="windspeed3_max">0</span> m/s
+            </div>            
+          </div>
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Min:</b> <span id="windspeed3_min">0</span> m/s
+            </div>            
+          </div> 
+          <div class="row">	
+            <div  style="text-align: center;">
+              <b>Average:</b> <span id="windspeed3_average">0</span> m/s
+            </div>            
+          </div>
+				</div>
+		  </div>		
+		  <div class="row">					
+			  <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="winddir1"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="winddir2"  ></canvas>
+				</div>
+		  </div>
+      <div class="row">					
+			  <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="rain1"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="rain2"  ></canvas>
+				</div>
+		  </div>	
+    </div>
+  </div>
+<hr />
+Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+
+
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript">
+
+    (function() {
+
+      var gauge_ws1 = new RadialGauge({
+        renderTo: 'windspeed1',
+        width: 300,
+        height: 300,
+        title: "Wind speed (Sparc Fun)",
+        fontTitleSize: 19,
+        colorTitle: "#000000",
+        units: "m/s",
+        minValue: 0,
+        maxValue: 40,
+        majorTicks: [
+            "0",
+            "5",
+            "10",
+            "15",
+            "20",
+            "25",
+            "30",
+            "35",
+            "40"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+              "from": 0,
+              "to": 7,
+              "color": "rgba(0, 255, 51, .75)"
+            },
+            {
+              "from": 7,
+              "to": 20,
+              "color": "rgba(255, 255, 51, .75)"
+            },
+            {
+              "from": 20,
+              "to": 40,
+              "color": "rgba(251, 50, 60, .75)"
+            }
+        ],
+        colorPlate: "#fff",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_ws2 = new RadialGauge({
+        renderTo: 'windspeed2',
+        width: 300,
+        height: 300,
+        title: "Wind speed (Pro analog)",
+        fontTitleSize: 19,
+        colorTitle: "#000000",
+        units: "m/s",
+        minValue: 0,
+        maxValue: 40,
+        majorTicks: [
+            "0",
+            "5",
+            "10",
+            "15",
+            "20",
+            "25",
+            "30",
+            "35",
+            "40"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+              "from": 0,
+              "to": 7,
+              "color": "rgba(0, 255, 51, .75)"
+            },
+            {
+              "from": 7,
+              "to": 20,
+              "color": "rgba(255, 255, 51, .75)"
+            },
+            {
+              "from": 20,
+              "to": 40,
+              "color": "rgba(251, 50, 60, .75)"
+            }
+        ],
+        colorPlate: "#fff",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_ws3 = new RadialGauge({
+        renderTo: 'windspeed3',
+        width: 300,
+        height: 300,
+        title: "Wind speed (Pro cnt)",
+        fontTitleSize: 19,
+        colorTitle: "#000000",
+        units: "m/s",
+        minValue: 0,
+        maxValue: 40,
+        majorTicks: [
+            "0",
+            "5",
+            "10",
+            "15",
+            "20",
+            "25",
+            "30",
+            "35",
+            "40"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+              "from": 0,
+              "to": 7,
+              "color": "rgba(0, 255, 51, .75)"
+            },
+            {
+              "from": 7,
+              "to": 20,
+              "color": "rgba(255, 255, 51, .75)"
+            },
+            {
+              "from": 20,
+              "to": 40,
+              "color": "rgba(251, 50, 60, .75)"
+            }
+        ],
+        colorPlate: "#fff",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_wd1 = new RadialGauge({
+        renderTo: 'winddir1',
+        width: 300,
+        height: 300,
+        minValue: 0,
+        maxValue: 360,
+        majorTicks: [
+            "N",
+            "NE",
+            "E",
+            "SE",
+            "S",
+            "SW",
+            "W",
+            "NW",
+            "N"
+        ],
+        minorTicks: 22,
+        ticksAngle: 360,
+        startAngle: 180,
+        strokeTicks: false,
+        highlights: false,
+        colorPlate: "#888",
+        colorMajorTicks: "#f5f5f5",
+        colorMinorTicks: "#ddd",
+        colorNumbers: "#ccc",
+        colorNeedle: "rgba(240, 128, 128, 1)",
+        colorNeedleEnd: "rgba(255, 160, 122, .9)",
+        valueBox: true,
+        valueTextShadow: false,
+        colorCircleInner: "#fff",
+        colorNeedleCircleOuter: "#111",
+        needleCircleSize: 15,
+        needleCircleOuter: false,
+        animationRule: "linear",
+        needleType: "line",
+        needleStart: 75,
+        needleEnd: 99,
+        needleWidth: 3,
+        borders: true,
+        borderInnerWidth: 0,
+        borderMiddleWidth: 0,
+        borderOuterWidth: 10,
+        colorBorderOuter: "#ccc",
+        colorBorderOuterEnd: "#ccc",
+        colorNeedleShadowDown: "#000",
+        borderShadowWidth: 0,
+        animationTarget: "plate",
+        units: "° Device 1",
+        title: "Wind direction",
+        fontTitleSize: 19,
+        colorTitle: "#f5f5f5",
+        colorUnits: "#c0c0c0",
+        animationDuration: 1500
+      });
+
+      var gauge_wd2 = new RadialGauge({
+        renderTo: 'winddir2',
+        minValue: 0,
+        maxValue: 360,
+        majorTicks: [
+            "N",
+            "NE",
+            "E",
+            "SE",
+            "S",
+            "SW",
+            "W",
+            "NW",
+            "N"
+        ],
+        minorTicks: 22,
+        ticksAngle: 360,
+        startAngle: 180,
+        strokeTicks: false,
+        highlights: false,
+        colorPlate: "#888",
+        colorMajorTicks: "#f5f5f5",
+        colorMinorTicks: "#ddd",
+        colorNumbers: "#ccc",
+        colorNeedle: "rgba(240, 128, 128, 1)",
+        colorNeedleEnd: "rgba(255, 160, 122, .9)",
+        valueBox: true,
+        valueTextShadow: false,
+        colorCircleInner: "#fff",
+        colorNeedleCircleOuter: "#ccc",
+        needleCircleSize: 15,
+        needleCircleOuter: false,
+        animationRule: "linear",
+        needleType: "line",
+        needleStart: 75,
+        needleEnd: 99,
+        needleWidth: 3,
+        borders: true,
+        borderInnerWidth: 0,
+        borderMiddleWidth: 0,
+        borderOuterWidth: 10,
+        colorBorderOuter: "#ccc",
+        colorBorderOuterEnd: "#ccc",
+        colorNeedleShadowDown: "#222",
+        borderShadowWidth: 0,
+        animationTarget: "plate",        
+        title: "Wind direction",
+        fontTitleSize: 19,
+        colorTitle: "#f5f5f5",
+        units: "° Device 2",
+        colorUnits: "#c0c0c0",
+        animationDuration: 1500
+      });
+
+      var gauge_rain1 = new LinearGauge({
+        renderTo: 'rain1',
+        width: 400,
+        height: 100,
+        minValue: 0,
+        maxValue: 160,
+        title: "Rain sensor 1 (mm)",
+        fontTitleSize: 29,
+        colorTitle: "#000000",
+        units: "mm today",
+  
+        majorTicks: [
+            "0",
+            "20",
+            "40",
+            "60",
+            "80",
+            "100",
+            "120",
+            "140",
+            "160"
+        ],
+        minorTicks: 10,
+        strokeTicks: true,
+        colorPlate: "#fff",
+        borderShadowWidth: 0,
+        borders: false,
+        barBeginCircle: false,
+        tickSide: "left",
+        numberSide: "left",
+        needleSide: "left",
+        needleType: "line",
+        needleWidth: 3,
+        colorNeedle: "#222",
+        colorNeedleEnd: "#222",
+        animationDuration: 1500,
+        animationRule: "linear",
+        animationTarget: "plate",
+        barWidth: 5,
+        ticksWidth: 50,
+        ticksWidthMinor: 15
+      }).draw();
+
+      var gauge_rain2 = new LinearGauge({
+        renderTo: 'rain2',
+        width: 400,
+        height: 100,
+        minValue: 0,
+        maxValue: 160,
+        title: "Rain sensor 2 (mm)",
+        fontTitleSize: 29,
+        colorTitle: "#000000",
+        majorTicks: [
+            "0",
+            "20",
+            "40",
+            "60",
+            "80",
+            "100",
+            "120",
+            "140",
+            "160"
+        ],
+        minorTicks: 10,
+        strokeTicks: true,
+        colorPlate: "#fff",
+        borderShadowWidth: 0,
+        borders: false,
+        barBeginCircle: false,
+        tickSide: "left",
+        numberSide: "left",
+        needleSide: "left",
+        needleType: "line",
+        needleWidth: 3,
+        colorNeedle: "#222",
+        colorNeedleEnd: "#222",
+        animationDuration: 1500,
+        animationRule: "linear",
+        animationTarget: "plate",
+        barWidth: 5,
+        ticksWidth: 50,
+        ticksWidthMinor: 15
+      }).draw();
+
+      gauge_wd1.value = 90;  // Just a value
+      gauge_wd1.draw();
+
+      gauge_wd2.value = 90;  // Just a value
+      gauge_wd2.draw();
+  
+      gauge_ws1.value = 0.1;  // Just a value
+      gauge_ws2.value = 0.1;  // Just a value
+      gauge_ws3.value = 0.1;  // Just a value
+
+      gauge_rain1.value = 12;  // Just a value
+      gauge_rain2.value = 12;  // Just a value
+      // For random movements
+      // setInterval(() => {
+      //   gauge.value = Math.random() * -220 + 220;
+      // }, 1000);
+
+      const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
+
+      const host = 'wss://demo.vscp.org:9901'
+      //const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
+
+      // Wait until the whole website is loaded
+      $( document ).ready( function() {
+        const optionsMQTT = {
+          keepalive: 30,
+          clientId: clientId,
+          protocolId: 'MQTT',
+          protocolVersion: 4,
+          clean: true,
+          reconnectPeriod: 3000,
+          connectTimeout: 30 * 1000,
+          will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+          },
+          rejectUnauthorized: false,
+          username: "vscp",
+          password: "secret"
+        }
+
+        console.log('connecting mqtt client to ', host)
+        const client = mqtt.connect(host, optionsMQTT)
+
+        client.on('error', (err) => {
+          console.log('Connection error: ', err)
+          client.end()
+        })
+
+        client.on('reconnect', () => {
+          console.log('Reconnecting...')
+        })
+
+        client.on('connect', () => {
+          console.log('Client connected:' + clientId)
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:01/#', { qos: 0 })
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:02/#', { qos: 0 })
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:03/#', { qos: 0 })
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:04/#', { qos: 0 })
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:05/#', { qos: 0 })
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:06/#', { qos: 0 })
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:07/#', { qos: 0 })
+        })
+
+        client.on('message', (topic, message, packet) => {
+
+          //console.log('Received Message: ' + message.toString() + '\nOn topic: ' + topic)
+        
+          const ev = JSON.parse(message.toString());
+          //console.log("Measurement:", ev.measurement.value);
+          
+          // Wind speed Sparc Fun (count)
+          if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:01") {
+            if (ev.measurement.sensorindex == 0) {
+              gauge_ws1.value = ev.measurement.value; 
+            }
+            else if (ev.measurement.sensorindex == 1) {
+              document.getElementById('windspeed1_max').innerHTML = ev.measurement.value; 
+              console.log("max1=",ev.measurement.value);
+            }
+            else if (ev.measurement.sensorindex == 2) {
+              document.getElementById('windspeed1_min').innerHTML = ev.measurement.value; 
+              console.log("min1=",ev.measurement.value);
+            }
+            else if (ev.measurement.sensorindex == 3) {
+              document.getElementById('windspeed1_average').innerHTML = ev.measurement.value; 
+              console.log("average1=",ev.measurement.value);
+            }
+          }
+          // Wind speed Pro (analog)
+          else if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:02") {
+            if (ev.measurement.sensorindex == 0) {
+              gauge_ws2.value = ev.measurement.value; 
+            }
+            else if (ev.measurement.sensorindex == 1) {
+              document.getElementById('windspeed2_max').innerHTML = ev.measurement.value;
+              console.log("max2=",ev.measurement.value); 
+            }
+            else if (ev.measurement.sensorindex == 2) {
+              document.getElementById('windspeed2_min').innerHTML = ev.measurement.value; 
+              console.log("min2=",ev.measurement.value);
+            }
+            else if (ev.measurement.sensorindex == 3) {
+              document.getElementById('windspeed2_average').innerHTML = ev.measurement.value; 
+              console.log("average2=",ev.measurement.value);
+            }
+          }
+          // Wind speed pro (count)
+          else if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:03") {
+            if (ev.measurement.sensorindex == 0) {              
+              gauge_ws3.value = ev.measurement.value; 
+              console.log("max3=",ev.measurement.value);
+            }
+            else if (ev.measurement.sensorindex == 1) {
+              document.getElementById('windspeed3_max').innerHTML = ev.measurement.value; 
+              console.log("min3=",ev.measurement.value);
+            }
+            else if (ev.measurement.sensorindex == 2) {
+              document.getElementById('windspeed3_min').innerHTML = ev.measurement.value; 
+              console.log("averege3=",ev.measurement.value);
+            }
+            else if (ev.measurement.sensorindex == 3) {
+              document.getElementById('windspeed3_average').innerHTML = ev.measurement.value; 
+            }
+          }
+          // Wind speed Sparc Fun (count)  
+          if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:04") {
+            gauge_wd1.value = ev.measurement.value;
+          }
+          // Wind direction Pro (analog)
+          else if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:05") {
+            gauge_wd2.value = ev.measurement.value;          
+          }
+          // Wind direction Pro (analog)
+          else if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:06") {
+            gauge_rain1.value = ev.measurement.value;          
+          }
+          // Wind direction Pro (analog)
+          else if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:07") {
+            gauge_rain2.value = ev.measurement.value;          
+          }
+          
+                   
+        })
+
+        client.on('close', () => {
+          console.log(clientId + ' disconnected')
+        })
+
+      }); // Document ready
+
+    })();
+
+  </script>
+</body>
+</html>
+
