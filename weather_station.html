@@ -39,8 +39,11 @@
 <div id="gauge"></div>
 <body>
   
+  <a href="https://www.vscp.org"><img src="./images/logo/vscp_logo_text_box.png" alt="VSCP - The Very Simple Control Protocol" height="100"></a>
+  <hr>
+
   <div class="container-fluid">
-    <h1>VSCP gauge.js wind speed demo</h1>
+    <h1>VSCP weather station demo</h1>
     <p>
         This demo uses the gauge from <a href="https://canvas-gauges.com/" target="new">gauge.js</a> to display the wind direction from two different wind direction sensors. It displays
         <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class1.measurement?id=type6" target="new">CLASS1.MEASUREMENT, Type=6/VSCP_TYPE_MEASUREMENT_TEMPERATURE</a> values that comes from sensor=4
@@ -55,6 +58,10 @@
     
     <p>
       Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-mqtt-web">here</a>
+    </p>
+
+    <p>
+      <a href="../index.html">Back to main demo page</a>
     </p>
 
     <hr>
@@ -105,12 +112,22 @@
         </div>
         <div class="col-sm w-5" >
           <div class="row">
+            <!-- Injecting linear gauge -->
+            <div>
+              <canvas id="dew_point_garage"  ></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm w-5" >
+          <div class="row">
             <div>
 				      <!-- Temperature ground -->
 					    <canvas id="temp_ground"  ></canvas>
             </div>
           </div>
         </div>
+      </div>
+      <div class="row">	   
         <div class="col-sm w-5" >
           <div class="row">
             <div>
@@ -262,6 +279,70 @@
 
       <hr>
 
+      <h3>Radiation</h3>
+
+      <!-- Radiation -->
+		  <div class="row">					
+			  <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="illuminance_east"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="illuminance_west"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="illuminance_north"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="illuminance_south"  ></canvas>
+				</div>        
+		  </div>
+      <div class="row">	
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="illuminance_sensorpuck"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas id="uvindex_sensorpuck"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+          <!-- Injecting linear gauge -->
+          <canvas id="uvindex_west"  ></canvas>
+        </div>
+      </div>
+
+      <hr>
+
+      <h3>Other measurements</h3>
+
+      <!-- Other -->
+      <div class="row">	
+        <div class="col-sm w-25" style="text-align: center;">
+					<canvas id="humidity_garage"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+					<canvas id="pressure_garage"  ></canvas>
+				</div>
+        <div class="col-sm w-25" style="text-align: center;">
+          <canvas id="pressure_air_garage"  ></canvas>
+        </div>
+        <div class="col-sm w-25" style="text-align: center;">
+          <canvas id="gas_concentration_garage"  ></canvas>
+        </div>
+      </div>
+
+      <div class="row">	
+        <div class="col-sm w-25" style="text-align: center;">
+          <canvas id="altitude_garage"  ></canvas>
+        </div>
+      </div>  
+
+      <hr>
+
     </div>
   </div>
 <hr />
@@ -406,6 +487,47 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         width: 100,
         height: 400,
         title: "East Air",
+        colorTitle: "#000000",
+        units: "°C",
+        minValue: -40,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        maxValue: 40,
+        majorTicks: [
+            "-40",
+            "-30",
+            "-20",
+            "-10",
+            "0",
+            "10",
+            "20",
+            "30",
+            "40"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        colorPlate: "#fff",
+        colorBarProgress: "#327ac0",
+        colorBar: "#f5f5f5",
+        borderShadowWidth: 0,
+        borders: true,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear",
+        barWidth: 10,
+        value: 0
+      }).draw();
+
+      var gauge_temp_dew_point = new LinearGauge({
+        renderTo: 'dew_point_garage',
+        width: 100,
+        height: 400,
+        title: "Dew Point",
         colorTitle: "#000000",
         units: "°C",
         minValue: -40,
@@ -696,6 +818,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         fontTitleSize: 19,
         colorTitle: "#000000",
         units: "m/s",
+        valueDec: 0,
         minValue: 0,
         maxValue: 40,
         majorTicks: [
@@ -748,6 +871,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         fontTitleSize: 19,
         colorTitle: "#000000",
         units: "m/s",
+        valueDec: 0,
         minValue: 0,
         maxValue: 40,
         majorTicks: [
@@ -800,6 +924,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         fontTitleSize: 19,
         colorTitle: "#000000",
         units: "m/s",
+        valueDec: 0,
         minValue: 0,
         maxValue: 40,
         majorTicks: [
@@ -873,6 +998,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         colorNeedle: "rgba(240, 128, 128, 1)",
         colorNeedleEnd: "rgba(255, 160, 122, .9)",
         valueBox: true,
+        valueDec: 0,
         valueTextShadow: false,
         colorCircleInner: "#fff",
         colorNeedleCircleOuter: "#111",
@@ -927,6 +1053,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         colorNeedle: "rgba(240, 128, 128, 1)",
         colorNeedleEnd: "rgba(255, 160, 122, .9)",
         valueBox: true,
+        valueDec: 0,
         valueTextShadow: false,
         colorCircleInner: "#fff",
         colorNeedleCircleOuter: "#ccc",
@@ -1010,15 +1137,14 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         colorTitle: "#000000",
         units: "mm today",
         majorTicks: [
-            "0",
-            "20",
-            "40",
-            "60",
-            "80",
-            "100",
-            "120",
-            "140",
-            "160"
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50",
+          "60",
+          "70"
         ],
         minorTicks: 10,
         strokeTicks: true,
@@ -1041,6 +1167,484 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
         barWidth: 5,
         ticksWidth: 50,
         ticksWidthMinor: 15
+      }).draw();
+
+      var gauge_illuminance_east = new RadialGauge({
+        renderTo: 'illuminance_east',
+        width: 300,
+        height: 300,
+        title: "Illuminance East",
+        units: "lux * 1000",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 70000,
+        majorTicks: [
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50",
+          "60",
+          "70"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 160,
+            "to": 220,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_illuminance_west = new RadialGauge({
+        renderTo: 'illuminance_west',
+        width: 300,
+        height: 300,
+        title: "Illuminance West",
+        units: "lux * 1000",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 70000,
+        majorTicks: [
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50",
+          "60",
+          "70"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 160,
+            "to": 220,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_illuminance_north = new RadialGauge({
+        renderTo: 'illuminance_north',
+        width: 300,
+        height: 300,
+        title: "Illuminance North",
+        units: "lux * 1000",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 70000,
+        majorTicks: [
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50",
+          "60",
+          "70"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 160,
+            "to": 220,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+      
+      var gauge_illuminance_south = new RadialGauge({
+        renderTo: 'illuminance_south',
+        width: 300,
+        height: 300,
+        title: "Illuminance South",
+        units: "lux * 1000",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 70000,
+        majorTicks: [
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50",
+          "60",
+          "70"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 160,
+            "to": 220,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_illuminance_south = new RadialGauge({
+        renderTo: 'illuminance_sensorpuck',
+        width: 300,
+        height: 300,
+        title: "Illuminance West Sensorpuck",
+        units: "lux * 1000",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 70000,
+        majorTicks: [
+          "0",
+          "10",
+          "20",
+          "30",
+          "40",
+          "50",
+          "60",
+          "70"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 160,
+            "to": 220,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_uvindex_west = new RadialGauge({
+        renderTo: 'uvindex_west',
+        width: 300,
+        height: 300,
+        title: "UV Index West VEML6070",
+        units: "idx",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        maxValue: 15,
+        majorTicks: [
+            "0",
+            "3",
+            "6",
+            "9",
+            "12",
+            "15",
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 6,
+            "to": 15,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_uvindex_sensorpuck = new RadialGauge({
+        renderTo: 'uvindex_sensorpuck',
+        width: 300,
+        height: 300,
+        title: "UV Index West Sensorpuck",
+        units: "idx",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        maxValue: 15,
+        majorTicks: [
+            "0",
+            "3",
+            "6",
+            "9",
+            "12",
+            "15",
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        highlights: [
+          {
+            "from": 6,
+            "to": 15,
+            "color": "rgba(200, 50, 50, .75)"
+          }
+        ],
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_humidity_garage = new RadialGauge({
+        renderTo: 'humidity_garage',
+        width: 300,
+        height: 300,
+        title: "Humidity",
+        units: "%",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 100,
+        majorTicks: [
+            "10",
+            "20",
+            "30",
+            "40",
+            "50",
+            "60",
+            "70",
+            "80",
+            "90",
+            "100"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_pressure_garage = new RadialGauge({
+        renderTo: 'pressure_garage',
+        width: 300,
+        height: 300,
+        title: "Pressure (Raw)",
+        units: "hPa",
+        minValue: 900,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 2,
+        maxValue: 1040,
+        majorTicks: [
+            "900",
+            "920",
+            "940",
+            "960",
+            "980",
+            "1000",
+            "1020",
+            "1040"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_pressure_air_garage = new RadialGauge({
+        renderTo: 'pressure_air_garage',
+        width: 300,
+        height: 300,
+        title: "Pressure (Sea)",
+        units: "hPa",
+        minValue: 900,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 2,
+        maxValue: 1040,
+        majorTicks: [
+            "900",
+            "920",
+            "940",
+            "960",
+            "980",
+            "1000",
+            "1020",
+            "1040"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+
+      // https://randomnerdtutorials.com/bme680-sensor-arduino-gas-temperature-humidity-pressure/
+      var gauge_gas_concentration_garage = new RadialGauge({
+        renderTo: 'gas_concentration_garage',
+        width: 300,
+        height: 300,
+        title: "Air Quality",
+        units: "Ω * 1000000",
+        minValue: 0,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 3000000,
+        majorTicks: [
+            "0",
+            "1",
+            "2",
+            "3"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
+      }).draw();
+
+      var gauge_altitude_garage = new RadialGauge({
+        renderTo: 'altitude_garage',
+        width: 300,
+        height: 300,
+        title: "Calculated altitude",
+        units: "m",
+        minValue: 300,
+        startAngle: 90,
+        ticksAngle: 180,
+        valueBox: true,
+        valueDec: 0,
+        maxValue: 500,
+        majorTicks: [
+            "300",
+            "320",
+            "340",
+            "360",
+            "380",
+            "400",
+            "420",
+            "440",
+            "460",
+            "480",
+            "500"
+        ],
+        minorTicks: 2,
+        strokeTicks: true,
+        colorPlate: "#f0f0f0",
+        borderShadowWidth: 0,
+        borders: false,
+        needleType: "arrow",
+        needleWidth: 2,
+        needleCircleSize: 7,
+        needleCircleOuter: true,
+        needleCircleInner: false,
+        animationDuration: 1500,
+        animationRule: "linear"
       }).draw();
 
       gauge_wd1.value = 90;  // Just a value
@@ -1111,7 +1715,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
           client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:FE:60:E3:27:1D:75:C3:00:04/#', { qos: 0 })
           
           // Illuminance east
-          client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:FE:60:E3:27:1D:75:C3:00:04/#', { qos: 0 })
+          client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:FE:60:E3:27:1D:75:C3:00:05/#', { qos: 0 })
 
           // Air temperature west
           client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:8B:57:15:00:03/#', { qos: 0 })
@@ -1123,7 +1727,14 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
           client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:8B:57:15:00:06/#', { qos: 0 })
 
           // Pi2 CAN4VSCP (temp south/compost1/compos2)
-          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:04:01:00:02/#', { qos: 0 })
+          // Limit subscribe to temperature from node=2
+          client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:04:01:00:02/1040/6/2/#', { qos: 0 })
+
+          // UV Index Sensorpuck
+          client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:F7:D4:81:CA:E1:4A:AA:00:04/#', { qos: 0 })
+
+          // Illuminance Sensorpuck
+          client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:F7:D4:81:CA:E1:4A:AA:00:03/#', { qos: 0 })
 
           // BME680
           client.subscribe('vscp/FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:AF:06:38:00:03/#', { qos: 0 })
@@ -1173,6 +1784,7 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
 
           // Pi10 Illuminance east
           if (ev.vscpGuid == "FF:FF:FF:FF:FF:FF:FF:FE:60:E3:27:1D:75:C3:00:05") {
+            gauge_illuminance_east.value = ev.measurement.value;
           }
 
           // Pi6 temperature west air
@@ -1181,13 +1793,13 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
           }
 
           // Pi6 illuminance west
-          if (ev.vscpGuid == "FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:8B:57:15:00:03") {
-            //gauge_temp_west.value = ev.measurement.value;
+          if (ev.vscpGuid == "FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:8B:57:15:00:04") {
+            gauge_illuminance_west.value = ev.measurement.value;
           }
 
           // Pi6 UV Index west
-          if (ev.vscpGuid == "FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:8B:57:15:00:03") {
-            //gauge_temp_west.value = ev.measurement.value;
+          if (ev.vscpGuid == "FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:8B:57:15:00:06") {
+            gauge_uvindex_west.value = ev.vscpData[2];
           }
 
           // Pi1 temperature green house
@@ -1208,28 +1820,44 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
             }
           }
 
+          // Sensorpuck illuminance
+          if ( ev.vscpGuid =="FF:FF:FF:FF:FF:FF:FF:F7:D4:81:CA:E1:4A:AA:00:03") {
+            gauge_illuminance_sensorpuck.value = ev.measurement.value;
+          }
+
+          // Sensorpuck UV Index
+          if ( ev.vscpGuid =="FF:FF:FF:FF:FF:FF:FF:F7:D4:81:CA:E1:4A:AA:00:04") {
+            gauge_uvindex_sensorpuck.value = ev.vscpData[2];
+          }
+
           // BME680
           if (ev.vscpGuid == "FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:AF:06:38:00:03") {
             if (ev.measurement.sensorindex == 0) {
               gauge_temp_garage_bme680.value = ev.measurement.value; 
             }
             else if (ev.measurement.sensorindex == 1) {
-              //gauge_temp_garage.value = ev.measurement.value; 
+              // Humidity
+              gauge_humidity_garage.value = ev.measurement.value; 
             }
             else if (ev.measurement.sensorindex == 2) {
-              //gauge_temp_garage.value = ev.measurement.value; 
+              // Raw Pressure
+              gauge_pressure_garage.value = ev.measurement.value/100; 
             }
             else if (ev.measurement.sensorindex == 3) {
-              //gauge_temp_garage.value = ev.measurement.value; 
+              // Sea level adjusted pressure
+              gauge_pressure_air_garage.value = ev.measurement.value/100; 
             }
             else if (ev.measurement.sensorindex == 4) {
-              //gauge_temp_garage.value = ev.measurement.value; 
+              // Gas resistance
+              gauge_gas_concentration_garage.value = ev.measurement.value; 
             }
             else if (ev.measurement.sensorindex == 5) {
-              //gauge_temp_garage.value = ev.measurement.value; 
+              // Altitude
+              gauge_altitude_garage.value = ev.measurement.value; 
             }
             else if (ev.measurement.sensorindex == 6) {
-              //gauge_temp_garage.value = ev.measurement.value; 
+              // Dew Point
+              gauge_temp_dew_point.value = ev.measurement.value; 
             }
           }
           // Wind speed Sparc Fun (count)
