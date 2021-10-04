@@ -1763,7 +1763,12 @@ Copyright &copy; 2000-2021 <a href="https://www.grodansparadis.com">Ake Hedman, 
           // }
           
           // Pi3 Daemon CAN4VSCP interface
-          if (ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:01:00:02") {
+          if ((ev.vscpGuid == "25:00:00:00:00:00:00:00:00:00:00:00:05:01:00:02") &&
+                (ev.vscpClass == 10) && 
+                (ev.vscpType == 6) ) {
+            if (ev.measurement.sensorindex == 0) {
+              gauge_temp_garage_lower.value = ev.measurement.value;
+            }
             if (ev.measurement.sensorindex == 0) {
               gauge_temp_garage_upper.value = ev.measurement.value; 
             }
