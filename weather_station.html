@@ -1341,7 +1341,7 @@ Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, 
         animationRule: "linear"
       }).draw();
 
-      var gauge_illuminance_south = new RadialGauge({
+      var gauge_illuminance_sensorpuck = new RadialGauge({
         renderTo: 'illuminance_sensorpuck',
         width: 300,
         height: 300,
@@ -1468,7 +1468,7 @@ Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, 
         renderTo: 'humidity_garage',
         width: 300,
         height: 300,
-        title: "Humidity",
+        title: "Humidity garage",
         units: "%",
         minValue: 0,
         startAngle: 90,
@@ -1826,13 +1826,15 @@ Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, 
           }
 
           // Sensorpuck illuminance
-          if ( ev.vscpGuid =="FF:FF:FF:FF:FF:FF:FF:F8:D4:81:CA:E1:4A:AA:00:01") {
+          if ( ev.vscpGuid =="FF:FF:FF:FF:FF:FF:FF:F8:D4:81:CA:E1:4A:AA:00:03") {
             gauge_illuminance_sensorpuck.value = ev.measurement.value;
+            console.log("illuminance:" + gauge_illuminance_sensorpuck.value);
           }
 
           // Sensorpuck UV Index
           if ( ev.vscpGuid =="FF:FF:FF:FF:FF:FF:FF:F8:D4:81:CA:E1:4A:AA:00:04") {
             gauge_uvindex_sensorpuck.value = ev.vscpData[2];
+            console.log("uvindex:" + gauge_uvindex_sensorpuck.value);
           }
 
           // BME680
