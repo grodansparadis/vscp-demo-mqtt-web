@@ -35,8 +35,9 @@
 const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
 
 //const host = 'ws://broker.emqx.io:8083/mqtt'
-const host = 'wss://demo.vscp.org:9901'
-//const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
+//const host = 'wss://demo.vscp.org:9901'
+//const host = 'wss://vscp3.vscp.org:9001'
+const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
 
 const options = {
   keepalive: 30,
@@ -52,10 +53,11 @@ const options = {
     qos: 0,
     retain: false
   },
-  rejectUnauthorized: false,
-  username: "vscp",
-  password: "secret"
+  rejectUnauthorized: false,  
 }
+
+// username: "vscp",
+//  password: "secret"
 
 console.log('connecting mqtt client to ', host)
 const client = mqtt.connect(host, options)

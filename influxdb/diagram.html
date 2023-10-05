@@ -1,0 +1,188 @@
+<html>
+  <head>
+    <title>Example: Simple flux query for VSCP data</title>
+    <script src="https://unpkg.com/@influxdata/influxdb-client/dist/index.browser.js"></script>
+    <script src="./config_influx.js"></script>
+
+    <script
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+      crossorigin="anonymous"></script>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"></script>
+
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js" integrity="sha256-bC3LCZCwKeehY6T4fFi9VfOU0gztUa+S4cnkIhVPZ5E=" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+
+  </head>
+  <body>
+
+    <div class="container-fluid">
+      <div class="container">
+
+    <h1>Simple linear diagram displaying data from an influxdb server using flux</h1>
+
+    <img src="images/logo/vscp_logo_text_box.png" width="100">
+    <br><br>
+
+    <div class="chart-container" style="position: relative; height:400; width:800">
+      <canvas id="tempChart" ></canvas>
+    </div>
+
+    <br />
+    <hr />
+    <br />
+    <p>
+      This diagram (using charts from <a href="https://www.chartjs.org/" target="new">charts.js</a>) 
+      displays real time temperature data which is fetched from a local server here at 
+      the Grodans Paradis AB office. The temperature sensor is located on the south wall of the
+      office and is directly effected by sun light so readings are not always valid during the day.
+    </p>
+
+    <p>
+      Update the page with the <b>F5</b> key to get the latest reading.
+    </p>
+
+    <p>
+      Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-influxdb-web">here</a>
+    </p>
+
+    <p>
+      <a href="./index.html">Back to main demo page</a>
+    </p>
+
+    <hr />
+    Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+
+      </div>
+    </div>
+
+    <script>
+
+    var measurement_time_south_air = [];
+    var measurement_value_south_air = [];
+
+      // Define the chart
+      var data = {
+        labels: [
+            measurement_time_south_air
+        ],
+        datasets: [{
+          label: 'Temperature ℃',
+          data: measurement_value_south_air,
+          fill: true,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+          pointRadius: 0,  // Don't draw points
+          pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+          pointHoverBorderColor: "rgba(59, 89, 152, 1)"
+        }]
+      };
+
+      var options = {
+          type: 'line',
+          responsive: true,
+          maintainAspectRatio: false,
+					animation: true,
+          data: data,
+					// http://www.chartjs.org/docs/latest/axes/cartesian/time.html#ticks-source
+          options: {
+              scales: {
+                xAxis: [{
+                  type: 'timeseries',                  
+                  unitStepSize: 2,
+                  time: {
+                    unit: 'hour'
+                  },
+                  ticks: {
+                    beginAtZero:true
+                  }
+                }],
+                yAxis: [{                  
+                  scaleLabel: {
+                    display: false,                    
+                    labelString: 'degrees Celsius'
+                  }
+    						}]
+              }
+          }
+      };
+
+      var ctx = $("#tempChart");
+      
+      var LineGraph = new Chart( ctx, options );
+
+      function createChart( d ) {
+        if (LineGraph) { 
+          LineGraph.destroy();
+        }
+        
+        options.data = d;  
+        LineGraph = new Chart( ctx, options );
+      }
+
+      // Values for last 24 hours
+      fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -24h) |> filter(fn: (r) => r._measurement == "temperature.south.air") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"])`
+      
+      // All table data for 12 hours
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -12h) |> filter(fn: (r) => r._measurement == "temperature.south.air") |> filter(fn: (r) => r["_field"] == "value")`
+
+      // Last value (for guage or similar)
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -5h) |> filter(fn: (r) => r._measurement == "temperature.south.air") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"]) |> last()`
+
+      // Data for last hour
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -1h) |> filter(fn: (r) => r._measurement == "temperature.south.air") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"])`
+
+      // Display values from last 24h where points are 20 minute mean  
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -24h) |> filter(fn: (r) => r._measurement == "temperature.south.air") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"]) |> aggregateWindow(every: 20m, fn: mean, createEmpty: true)`
+
+
+      // create query API
+      const {url, token, org} = window.INFLUX_ENV
+      const influxDBClient = window['@influxdata/influxdb-client'];
+      const influxDB = new influxDBClient.InfluxDB({url, token});
+      const queryApi = influxDB.getQueryApi(org);
+
+        queryApi.queryRows(fluxQuery, {
+          next(row, tableMeta) {
+
+            const o = tableMeta.toObject(row);
+            
+            // default output
+            console.log("row:",JSON.stringify(o, null, 2),"VALUE=",o._value);
+
+            // default output
+            console.log(JSON.stringify(o, null, 2));
+
+            console.log(o._time,o._value);
+
+            var d = new Date(o._time);
+            var xpoint = "" + d.getHours();
+            if (xpoint.length < 2) {
+              xpoint = "0" + xpoint;
+            }
+            xpoint += ":";
+            if (d.getMinutes()<10) {
+              xpoint += "0" + d.getMinutes();
+            }
+            else {
+              xpoint += d.getMinutes();
+            }            
+            LineGraph.data.datasets[0].data.push({x: xpoint, y: o._value});
+          },
+          error(error) {
+            console.log('\nQUERY FAILED', error);
+          },
+          complete() {
+            console.log('\nQUERY FINISHED');
+            LineGraph.update();
+          },
+        })
+
+    </script>
+  </body>
+</html>

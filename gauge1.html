@@ -54,7 +54,7 @@
 </div>
 
 <hr />
-Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+Copyright &copy; 2000-2023 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
 
 
   <!-- JQuery -->
@@ -83,8 +83,9 @@ Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, 
 
       const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
 
-      const host = 'wss://demo.vscp.org:9901'
-      //const host = 'ws://test.mosquitto.org:8081'  // Works without credentials
+      //const host = 'wss://demo.vscp.org:9901'
+      //const host = 'wss://vscp3.vscp.org:9001'
+      const host = 'wss://test.mosquitto.org:8081'  // Works without credentials
 
       // Wait until the whole website is loaded
       $( document ).ready( function() {
@@ -102,10 +103,11 @@ Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, 
             qos: 0,
             retain: false
           },
-          rejectUnauthorized: false,
-          username: "vscp",
-          password: "secret"
+          rejectUnauthorized: false,          
         }
+        
+        //username: "vscp",
+        //password: "secret"
 
         console.log('connecting mqtt client to ', host)
         const client = mqtt.connect(host, optionsMQTT)

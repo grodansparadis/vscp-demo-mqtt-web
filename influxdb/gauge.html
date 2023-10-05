@@ -1,0 +1,153 @@
+
+<!--
+  This file connects to a influxdb server, fetch data and show the live temperature in our fridge in 
+  a bernii/gauge.js gauge.  
+  
+  https://github.com/bernii/gauge.js
+  https://bernii.github.io/gauge.js/
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Don't cache the page -->
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <title>Influxdb gauge demo</title>
+  
+  <script src="https://unpkg.com/@influxdata/influxdb-client/dist/index.browser.js"></script>
+  <script src="./config_influx.js"></script>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+  
+  <!-- Favorite icon -->
+  <link rel="icon" href="./images/favicon.ico">
+</head>
+<div id="gauge"></div>
+<body>
+  
+  <a href="https://www.vscp.org"><img src="./images/logo/vscp_logo_text_box.png" alt="VSCP - The Very Simple Control Protocol" height="100"></a>
+  <hr>
+
+  <div class="container-fluid">
+    <h1>VSCP influxdb gauge demo</h1>
+    <p>
+        This demo uses the gauge from <a href="https://github.com/bernii/gauge.js" target="new">bernii/gauge.js</a> to display temperature measurement values in degrees Celsius. It displays
+        <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class1.measurement?id=type6" target="new">CLASS1.MEASUREMENT, Type=6/VSCP_TYPE_MEASUREMENT_TEMPERATURE</a> values that comes from a sensor
+        in the air south of our house. This is real live data. Docs for the gauge is <a href="https://github.com/bernii/gauge.js">here</a> and <a href="https://bernii.github.io/gauge.js/">here</a>
+    </p>
+
+    <p>
+      Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-influxdb-web">here</a>
+    </p>
+
+    <p>
+      <a href="./index.html">Back to main demo page</a>
+    </p>
+
+    <hr>
+
+    <h2>Demo</h2>
+    <div class="container">			
+		  <div class="row">					
+			  <div class="mx-auto w-90">
+				  <!-- Injecting linear gauge -->
+					<canvas class="mw-100 h-100" id="canvas_gauge"></canvas>
+				</div>
+		</div>	
+</div>
+
+<hr />
+Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+
+
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"></script>
+
+  <!-- bernii/gauge.js Charts API -->
+  <script type="text/javascript" src="js/gauge.js-1.3.7/dist/gauge.js"></script>
+  <script type="text/javascript">
+
+    (function() {
+
+      var opts = {
+        angle: 0.0,              // The span of the gauge arc
+        lineWidth: 0.44,          // The line thickness
+        pointer: {
+          length: 0.9,            // Relative to gauge radius
+          strokeWidth: 0.035      // The thickness
+        },
+        colorStart: '#6FADCF',    // Colors
+        colorStop: '#8FC0DA',     // just experiment with them
+        strokeColor: '#E0E0E0',   // to see which ones work best for you
+        staticLabels: {
+          font: "10px sans-serif",  // Specifies font
+          labels: [-40, -30, -20, -10, 0, 10, 20, 30, 40],  // Print labels at these values
+          color: "#000000",  // Optional: Label text color
+          fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+        },
+        staticZones: [
+          {strokeStyle: "#EA7282", min: -40, max: -15}, // Red from -40 to -10
+          {strokeStyle: "#F3EE99", min: -15, max: 0},   // Yellow
+          {strokeStyle: "#A6E793", min:  0, max: 25},   // Green
+          {strokeStyle: "#F3EE99", min: 25, max: 30},   // Yellow
+          {strokeStyle: "#EA7282", min: 30, max: 40}    // Red
+        ],
+      };
+
+      var target = document.getElementById('canvas_gauge');   // your canvas element
+      var gauge = new Gauge(target).setOptions(opts);         // create gauge!
+      gauge.maxValue = 40;        // set max gauge value
+      gauge.setMinValue(-40);     // set min value
+      gauge.set(0);               // set start value
+      gauge.title = gauge.value;
+
+      // Wait until the whole website is loaded
+      $( document ).ready( function() {
+        
+        // Last value (for gauge or similar)
+        fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -5h) |> filter(fn: (r) => r._measurement == "temperature.south.air") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"]) |> last()`
+
+        // create query API
+      const {url, token, org} = window.INFLUX_ENV
+      const influxDBClient = window['@influxdata/influxdb-client'];
+      const influxDB = new influxDBClient.InfluxDB({url, token});
+      const queryApi = influxDB.getQueryApi(org);
+
+        queryApi.queryRows(fluxQuery, {
+          next(row, tableMeta) {
+
+            const o = tableMeta.toObject(row);
+            
+            // default output
+            console.log("row:",JSON.stringify(o, null, 2),"VALUE=",o._value);
+
+            // default output
+            console.log(JSON.stringify(o, null, 2));
+
+            console.log(o._time,o._value);
+
+            gauge.set(o._value);
+          },
+          error(error) {
+            console.log('\nQUERY FAILED', error);
+          },
+          complete() {
+            console.log('\nQUERY FINISHED');
+          },
+        })
+
+      }); // Document ready
+
+    })();
+
+  </script>
+</body>
+</html>
+

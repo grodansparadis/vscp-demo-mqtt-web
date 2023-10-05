@@ -1,0 +1,349 @@
+<html>
+  <head>
+    <title>Example: Simple flux query for VSCP data</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Don't cache the page -->
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+
+    <style>
+      .chart-container {
+        width: 400px;
+        height:400px
+      }
+    </style> 
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+
+  </head>
+
+  <body>
+
+    <div class="container-fluid">
+      <div class="container">
+
+        <img src="images/logo/vscp_logo_text_box.png" width="100">
+
+        <div class="row">	
+          <h1>Simple linear diagram displaying wind direction data from an influxdb server using flux</h1>
+        </div> 
+
+        
+        <br><br>
+        <hr>
+
+        <div class="row">
+          <div class="chart-container" style="position: relative; height:600; width:600">
+            <canvas id="radarChart" class="chart-container"></canvas>
+          </div>
+        </div>
+
+        <br><br>
+        <hr>
+        <br><br>
+
+        <div>
+          <img src="./images/weather_station.jpg" class=".img-fluid. max-width: 50%;" style="width:500px;height:600px;">
+        </div>
+
+        <div class="row">
+          <br />
+          <hr />
+          <br />
+          
+          <p>
+            This diagram (using charts from <a href="https://www.chartjs.org/" target="new">charts.js</a>) 
+            displays real time wind direction data which is fetched from a local server here at 
+            the Grodans Paradis AB office. The wind direction in this sample comes from a 
+            <a href="https://www.sparkfun.com/products/15901">Weather Meter Kit</a>
+            bought from <a href="https://www.sparkfun.com/">Sparc Fun</a>. The displayed graphics is the 
+            direction for the last hour.
+          </p>
+          <p>
+            The data from the wind vane (a voltage) is collected by a 
+            <a href"https://www.grodansparadis.com/vilnius/vilnius.html">CAN4VSCP Vilnius</a> 
+            module and sent over a CAN bus to a VSCP Daemon. This daemon export the voltage reading to
+            a MQTT broker and from the MQTT broker a <a href="https://nodered.org/">node-red</a> flow 
+            read the value and transform it to a wind direction. This wind direction is feed back to the MQTT broker and 
+            is also written to a influxdb bucket. 
+          </p>
+          <p>
+            You can look at the raw wind vane voltage events by subscribing to the VSCP demo broker at 
+            topic <i>vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:01:00:03/15/2/#</i>
+          </p>
+          <pre>
+            mosquitto_sub -h demo.vscp.org -u vscp -P secret -t vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:01:00:03/3/15/2/0
+          </pre>
+          <p>
+            You can look at the wind vane direction events by subscribing to the VSCP demo broker at topic 
+            <i>vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:04/4/1040/30/0/#</i>
+          </p>
+
+          <pre>
+            mosquitto_sub -h demo.vscp.org -u vscp -P secret -t vscp/25:00:00:00:00:00:00:00:00:00:00:00:05:00:01:04/4/1040/30
+          </pre>
+
+          <p>
+            Update the page with the <b>F5</b> key to get the latest reading.
+          </p>
+
+          <p>
+            Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-influxdb-web">here</a>
+          </p>
+
+          <p>
+            <a href="./index.html">Back to main demo page</a>
+          </p>
+
+        </div>
+
+        <div class="row">
+          <hr />
+          <p>          
+            Copyright &copy; 2000-2022 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"></script>
+
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1/dist/chart.min.js" integrity="sha256-bC3LCZCwKeehY6T4fFi9VfOU0gztUa+S4cnkIhVPZ5E=" crossorigin="anonymous"></script>
+
+    <script src="https://unpkg.com/@influxdata/influxdb-client/dist/index.browser.js"></script>
+    <script src="./config_influx.js"></script>
+
+
+    <script type="text/javascript">      
+
+      var direction = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+
+      // Define the chart
+      var data = {
+        labels: [
+          'N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WSW', 'NW', 'NNW'
+        ],        
+        datasets: [{
+          label: 'Direction',
+          data: direction,
+          fill: true,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1,
+          pointRadius: 0,  // Don't draw points
+          pointHoverBackgroundColor: "rgba(59, 89, 152, 1)",
+          pointHoverBorderColor: "rgba(59, 89, 152, 1)"
+        }]
+      };
+
+      var options = {
+        type: 'radar',
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: true,
+        data: data,
+        // http://www.chartjs.org/docs/latest/axes/cartesian/time.html#ticks-source
+        options: {
+            scales: {
+              r: {
+                angleLines: {
+                  color: 'blue'
+                }
+              }
+            }
+        }
+      };
+
+      var ctx = $("#radarChart");
+      
+      var LineGraph = new Chart( ctx, options );
+
+      function createChart( d ) {
+        if (LineGraph) { 
+          LineGraph.destroy();
+        }
+        
+        options.data = d;  
+        LineGraph = new Chart( ctx, options );
+      }
+
+      function getDirectionLabel( value ) {
+          if ( value >= 11.25 && value < 33.75 ) {
+            return 'NNE';
+          }
+          else if ( value >= 33.75 && value < 56.25 ) {
+            return 'NE';
+          }
+          else if (value >= 56.25 && value < 78.75 ) {
+            return 'ENE';
+          }
+          else if (value >= 78.75 && value < 101.25 ) {
+            return 'E';
+          }
+          else if (value >= 101.25 && value < 123.75 ) {
+            return 'ESE';
+          }
+          else if (value >= 123.75 && value < 146.25 ) {
+            return 'SE';
+          }
+          else if (value >= 146.25 && value < 168.75 ) {
+            return 'SSE';
+          }
+          else if (value >= 168.75 && value < 191.25 ) {
+            return 'S';
+          }
+          else if (value >= 191.25 && value < 213.75 ) {
+            return 'SSW';
+          }
+          else if (value >= 213.75 && value < 236.25 ) {
+            return 'SW';
+          }
+          else if (value >= 236.25 && value < 258.75 ) {
+            return 'WSW';
+          }
+          else if (value >= 258.75 && value < 281.25 ) {
+            return 'W';
+          }
+          else if (value >= 281.25 && value < 303.75 ) {
+            return 'WNW';
+          }
+          else if (value >= 303.75 && value < 326.25 ) {
+            return 'NW';
+          }
+          else if (value >= 326.25 && value < 348.75 ) {
+            return 'NNW';
+          }
+          else if (value >= 348.75 ) {
+            return 'N';
+          }
+          else if (value < 11.25 ) {
+            return 'N';
+          }
+
+          return  value;  
+      };
+
+      function getDirectionIndex( value ) {
+          if ( value >= 11.25 && value < 33.75 ) {
+            return 1;
+          }
+          else if ( value >= 33.75 && value < 56.25 ) {
+            return 2;
+          }
+          else if (value >= 56.25 && value < 78.75 ) {
+            return 3;
+          }
+          else if (value >= 78.75 && value < 101.25 ) {
+            return 4;
+          }
+          else if (value >= 101.25 && value < 123.75 ) {
+            return 5;
+          }
+          else if (value >= 123.75 && value < 146.25 ) {
+            return 6;
+          }
+          else if (value >= 146.25 && value < 168.75 ) {
+            return 7;
+          }
+          else if (value >= 168.75 && value < 191.25 ) {
+            return 8;
+          }
+          else if (value >= 191.25 && value < 213.75 ) {
+            return 9;
+          }
+          else if (value >= 213.75 && value < 236.25 ) {
+            return 10;
+          }
+          else if (value >= 236.25 && value < 258.75 ) {
+            return 11;
+          }
+          else if (value >= 258.75 && value < 281.25 ) {
+            return 12;
+          }
+          else if (value >= 281.25 && value < 303.75 ) {
+            return 13;
+          }
+          else if (value >= 303.75 && value < 326.25 ) {
+            return 14;
+          }
+          else if (value >= 326.25 && value < 348.75 ) {
+            return 15;
+          }
+          else if (value >= 348.75 ) {
+            return 0;
+          }
+          else if (value < 11.25 ) {
+            return 0;
+          }
+
+          return  value;  
+      };
+
+      // Values for last 24 hours
+      fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -1h) |> filter(fn: (r) => r._measurement == "winddirection.sparcfun.count") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"])`
+      
+      // All table data for 12 hours
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -12h) |> filter(fn: (r) => r._measurement == "winddirection.sparcfun.count") |> filter(fn: (r) => r["_field"] == "value")`
+
+      // Last value (for guage or similar)
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -5h) |> filter(fn: (r) => r._measurement == "winddirection.sparcfun.count") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"]) |> last()`
+
+      // Data for last hour
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -1h) |> filter(fn: (r) => r._measurement == "winddirection.sparcfun.count") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"])`
+
+      // Display values from last 24h where points are 20 minute mean  
+      //fluxQuery = `from(bucket:"brattberg.vscp") |> range(start: -24h) |> filter(fn: (r) => r._measurement == "winddirection.sparcfun.count") |> filter(fn: (r) => r["_field"] == "value") |> keep(columns: ["_value", "_time"]) |> aggregateWindow(every: 20m, fn: mean, createEmpty: true)`
+
+
+      // create query API
+      const {url, token, org} = window.INFLUX_ENV
+      const influxDBClient = window['@influxdata/influxdb-client'];
+      const influxDB = new influxDBClient.InfluxDB({url, token});
+      const queryApi = influxDB.getQueryApi(org);
+
+      var total_count = 0;
+      queryApi.queryRows(fluxQuery, {
+          next(row, tableMeta) {
+
+            const o = tableMeta.toObject(row);
+            
+            // default output
+            console.log("row:",JSON.stringify(o, null, 2),"VALUE=",o._value);
+
+            // default output
+            console.log(JSON.stringify(o, null, 2));
+
+            console.log(o._time,o._value);
+
+            var d = new Date(o._time);
+            var xpoint = "" + d.getHours() + ":" + d.getMinutes();
+            console.log(xpoint);
+
+            total_count++
+            direction[getDirectionIndex(o._value)]++;
+
+            LineGraph.data.datasets[0].data=direction;
+
+          },
+          error(error) {
+            console.log('\nQUERY FAILED', error);
+          },
+          complete() {
+            console.log('\nQUERY FINISHED');
+            // Make percentage
+            for (i=0; i<16; i++) {
+              direction[i] = (direction[i] * 100)/total_count;
+            };
+            LineGraph.update();
+          },
+        })
+
+    </script>
+  </body>
+</html>
